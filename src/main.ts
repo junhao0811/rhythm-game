@@ -48,10 +48,21 @@ type Event = "keydown" | "keyup" | "keypress";
 
 type State = Readonly<{
     gameEnd: boolean;
+    // content?: ReadonlyArray<Note>;
+}>;
+
+type Note = Readonly<{
+    user_played: string;
+    instrument_name: string;
+    velocity: number;
+    pitch: number;
+    start: number;
+    end: number;
 }>;
 
 const initialState: State = {
     gameEnd: false,
+    // content: [] ??
 } as const;
 
 /**
@@ -110,28 +121,34 @@ export function main(
     samples: { [key: string]: Tone.Sampler },
 ) {
     // Parse the notes from the contents of the song CSV file
-    const notes = csvContents
+    const notes: Note[] = csvContents
         .split("\n")
         .slice(1)
         .filter((line) => line.trim() !== "")
         .map((note) => {
-            const [
-                user_played,
-                instrument_name,
-                velocity,
-                pitch,
-                startTime,
-                endTime,
-            ] = note.split(",");
+            const [user_played, instrument_name, velocity, pitch, start, end] =
+                note.split(",");
             return {
                 user_played,
                 instrument_name,
                 velocity: parseInt(velocity),
                 pitch: parseInt(pitch),
-                startTime: parseFloat(startTime),
-                endTime: parseFloat(endTime),
+                start: parseFloat(start),
+                end: parseFloat(end),
             };
         });
+
+    // Add notes moving down the screen (notes where user_played is True)
+
+    // Introduce some way of associating the notes in your state with their corresponding SVG element
+
+    // Assign each note to a column
+
+    // Time each note to appear appropriately according to the song (refer to week 3 applied exercise 5)
+
+    // Animate the notes to move down continuously without stopping (refer to week 3 applied exercise 2)
+
+    // Make notes disappear when reaching the bottom of the playing area
 
     // Canvas elements
     const svg = document.querySelector("#svgCanvas") as SVGGraphicsElement &
