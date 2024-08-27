@@ -14,7 +14,7 @@
 
 import "./style.css";
 
-import { fromEvent, interval, merge } from "rxjs";
+import { from, fromEvent, interval, merge } from "rxjs";
 import { map, filter, scan } from "rxjs/operators";
 import * as Tone from "tone";
 import { SampleLibrary } from "./tonejs-instruments";
@@ -109,6 +109,30 @@ export function main(
     csvContents: string,
     samples: { [key: string]: Tone.Sampler },
 ) {
+    // Parse the notes from the contents of the song CSV file
+    const notes = csvContents
+        .split("\n")
+        .slice(1)
+        .filter((line) => line.trim() !== "")
+        .map((note) => {
+            const [
+                user_played,
+                instrument_name,
+                velocity,
+                pitch,
+                startTime,
+                endTime,
+            ] = note.split(",");
+            return {
+                user_played,
+                instrument_name,
+                velocity: parseInt(velocity),
+                pitch: parseInt(pitch),
+                startTime: parseFloat(startTime),
+                endTime: parseFloat(endTime),
+            };
+        });
+
     // Canvas elements
     const svg = document.querySelector("#svgCanvas") as SVGGraphicsElement &
         HTMLElement;
