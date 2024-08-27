@@ -48,10 +48,10 @@ type Event = "keydown" | "keyup" | "keypress";
 
 type State = Readonly<{
     gameEnd: boolean;
-    // content?: ReadonlyArray<Note>;
+    content: ReadonlyArray<NoteData>;
 }>;
 
-type Note = Readonly<{
+type NoteData = Readonly<{
     user_played: string;
     instrument_name: string;
     velocity: number;
@@ -62,7 +62,7 @@ type Note = Readonly<{
 
 const initialState: State = {
     gameEnd: false,
-    // content: [] ??
+    content: [],
 } as const;
 
 /**
@@ -113,20 +113,16 @@ const createSvgElement = (
 };
 
 /**
- * This is the function called on page load. Your main game loop
- * should be called here.
+ * Parses the notes from the contents of the song CSV file.
+ * @param contents Contents of the song CSV file
+ * @returns Notes parsed from the contents
  */
-export function main(
-    csvContents: string,
-    samples: { [key: string]: Tone.Sampler },
-) {
-    // Parse the notes from the contents of the song CSV file
-    const notes: Note[] = csvContents
-        .split("\n")
-        .slice(1)
-        .filter((line) => line.trim() !== "")
-        .map((note) => {
-            const [user_played, instrument_name, velocity, pitch, start, end] =
+const parseNotes = (contents: string) => {
+    return from(contents.split("\n").slice(1)).pipe(
+        // Convert to observable
+        filter((line) => line.trim() !== ""),
+        map((note) => {
+            const [user_played, instrument_name, velocity, pitch, start, end] = // Destructure the note
                 note.split(",");
             return {
                 user_played,
@@ -135,21 +131,19 @@ export function main(
                 pitch: parseInt(pitch),
                 start: parseFloat(start),
                 end: parseFloat(end),
-            };
-        });
+            } as NoteData;
+        }),
+    );
+};
 
-    // Add notes moving down the screen (notes where user_played is True)
-
-    // Introduce some way of associating the notes in your state with their corresponding SVG element
-
-    // Assign each note to a column
-
-    // Time each note to appear appropriately according to the song (refer to week 3 applied exercise 5)
-
-    // Animate the notes to move down continuously without stopping (refer to week 3 applied exercise 2)
-
-    // Make notes disappear when reaching the bottom of the playing area
-
+/**
+ * This is the function called on page load. Your main game loop
+ * should be called here.
+ */
+export function main(
+    csvContents: string,
+    samples: { [key: string]: Tone.Sampler },
+) {
     // Canvas elements
     const svg = document.querySelector("#svgCanvas") as SVGGraphicsElement &
         HTMLElement;
@@ -228,7 +222,7 @@ export function main(
     };
 
     const source$ = tick$
-        .pipe(scan((s: State) => ({ gameEnd: false }), initialState))
+        .pipe(scan((s: State) => ({ ...s, gameEnd: false }), initialState))
         .subscribe((s: State) => {
             render(s);
 
@@ -238,6 +232,36 @@ export function main(
                 hide(gameover);
             }
         });
+
+    // TODO Parse the notes from the contents of the song CSV file
+    const note$ = parseNotes(csvContents);
+
+    // * Add notes moving down the screen (notes where user_played is True)
+
+    // TODO Introduce some way of associating the notes in your state with their corresponding SVG element
+    // This is so you can refer to the correct SVG elements when updating the view
+
+    // TODO Assign each note to a column
+    // render, destructure and take out each color
+
+    // TODO Time each note to appear appropriately according to the song (refer to week 3 applied exercise 5)
+    //
+
+    // TODO Animate the notes to move down continuously without stopping (refer to week 3 applied exercise 2)
+
+    // TODO Make notes disappear when reaching the bottom of the playing area
+
+    // ! Do not store SVG elements in your state (scan) as this is impure. Refer to the Asteroids example and workshops (week 3/4) for suggestions.
+
+    // * Add user input to play notes
+
+    // TODO Add user input to play a note on a column (refer to week 3 applied exercise 4)
+
+    // TODO Play the note if the key press aligns with the note, otherwise play a random note (refer to week 4 applied exercises 1–2 for implementing randomness, and week 4 applied exercise 6 for how to play a note)
+
+    // * Play notes in the background (notes where user_played is False)
+
+    // TODO Play each background note at the correct time according to the song (refer to week 3 applied exercise 5)
 }
 
 // The following simply runs your main function on window load.  Make sure to leave it in place.
