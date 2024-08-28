@@ -48,21 +48,28 @@ type Event = "keydown" | "keyup" | "keypress";
 
 type State = Readonly<{
     gameEnd: boolean;
-    notes?: ReadonlyArray<NoteData>;
+    notes: ReadonlyArray<MusicalNote>;
+    score: number;
+    missedNotes?: number;
 }>;
 
-type NoteData = Readonly<{
+type MusicalNote = Readonly<{
     user_played: string;
     instrument_name: string;
     velocity: number;
     pitch: number;
     start: number;
     end: number;
+    x: number;
+    y: number;
+    color: string;
+    svgElement?: SVGElement;
 }>;
 
 const initialState: State = {
     gameEnd: false,
-    // notes: []
+    notes: [],
+    score: 0,
 } as const;
 
 /**
@@ -112,12 +119,13 @@ const createSvgElement = (
     return elem;
 };
 
+// My functions
 /**
  * Parses the notes from the contents of the song CSV file.
  * @param text Contents of the song CSV file
  * @returns Notes parsed from the contents
  */
-const parseNotes = (text: string): ReadonlyArray<NoteData> => {
+const parseNotes = (text: string): ReadonlyArray<MusicalNote> => {
     const notes = text
         .split("\n")
         .slice(1)
@@ -132,11 +140,56 @@ const parseNotes = (text: string): ReadonlyArray<NoteData> => {
                 pitch: parseInt(pitch),
                 start: parseFloat(start),
                 end: parseFloat(end),
-            } as NoteData;
+                x: 0,
+                y: 0,
+                color: "",
+            } as MusicalNote;
         });
 
     return notes;
 };
+
+/**
+ * Pure transformation of State to make the notes move down the screen.
+ * @param s Current state
+ * @param yAmount Amount to move down
+ * @returns Updated state
+ */
+function move(note: MusicalNote, yAmount: number): MusicalNote {
+    return {
+        ...note, // Copies the members of the note for all except:
+        y: note.y + yAmount, // Moves the note down
+    };
+}
+
+/**
+ * Associates each note with its corresponding SVG element.
+ * @param notes Notes to associate with SVG elements
+ * @param svg A canvas element
+ * @returns Observable of notes with SVG elements
+ */
+function associateWithSvgElements(
+    notes: ReadonlyArray<MusicalNote>,
+    svg: SVGGraphicsElement,
+): Observable<MusicalNote> {
+    const noteWithSvgElement$ = from(notes).pipe(
+        map((note) => {
+            // Associate each note with its corresponding SVG element
+            return {
+                ...note, // Copies the members of the note for all except:
+                svgElement: createSvgElement(svg.namespaceURI, "circle", {
+                    r: `${Note.RADIUS}`,
+                    cx: `${note.x}`,
+                    cy: `${note.y}`,
+                    style: `fill: ${note.color}`,
+                    class: "shadow",
+                }) as SVGElement,
+            };
+        }),
+    );
+
+    return noteWithSvgElement$;
+}
 
 /**
  * This is the function called on page load. Your main game loop
@@ -235,16 +288,18 @@ export function main(
             }
         });
 
-    // TODO Parse the notes from the contents of the song CSV file
-    const notes: ReadonlyArray<NoteData> = parseNotes(csvContents);
+    // Parse the notes from the contents of the song CSV file
+    const notes: ReadonlyArray<MusicalNote> = parseNotes(csvContents);
 
     // * Add notes moving down the screen (notes where user_played is True)
+    const userPlayedNotes = notes.filter((note) => note.user_played === "True");
 
-    // TODO Introduce some way of associating the notes in your state with their corresponding SVG element
-    // This is so you can refer to the correct SVG elements when updating the view
+    // Introduce some way of associating the notes in your state with their corresponding SVG element
+    const noteWithSvgElement$ = associateWithSvgElements(userPlayedNotes, svg);
 
     // TODO Assign each note to a column based on the pitch
-    // render, destructure and take out each color
+    // ? render, destructure and take out each color
+    // ? use forEach? to loop through the array of notes and assign each note to a column based on the pitch
 
     // TODO Time each note to appear appropriately according to the song (refer to week 3 applied exercise 5)
 
