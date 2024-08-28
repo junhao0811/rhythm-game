@@ -14,7 +14,7 @@
 
 import "./style.css";
 
-import { from, fromEvent, interval, merge } from "rxjs";
+import { from, fromEvent, interval, merge, Observable } from "rxjs";
 import { map, filter, scan } from "rxjs/operators";
 import * as Tone from "tone";
 import { SampleLibrary } from "./tonejs-instruments";
@@ -48,7 +48,7 @@ type Event = "keydown" | "keyup" | "keypress";
 
 type State = Readonly<{
     gameEnd: boolean;
-    content: ReadonlyArray<NoteData>;
+    notes?: ReadonlyArray<NoteData>;
 }>;
 
 type NoteData = Readonly<{
@@ -62,7 +62,7 @@ type NoteData = Readonly<{
 
 const initialState: State = {
     gameEnd: false,
-    content: [],
+    // notes: []
 } as const;
 
 /**
@@ -114,15 +114,16 @@ const createSvgElement = (
 
 /**
  * Parses the notes from the contents of the song CSV file.
- * @param contents Contents of the song CSV file
+ * @param text Contents of the song CSV file
  * @returns Notes parsed from the contents
  */
-const parseNotes = (contents: string) => {
-    return from(contents.split("\n").slice(1)).pipe(
-        // Convert to observable
-        filter((line) => line.trim() !== ""),
-        map((note) => {
-            const [user_played, instrument_name, velocity, pitch, start, end] = // Destructure the note
+const parseNotes = (text: string): ReadonlyArray<NoteData> => {
+    const notes = text
+        .split("\n")
+        .slice(1)
+        .filter((line) => line.trim() !== "")
+        .map((note) => {
+            const [user_played, instrument_name, velocity, pitch, start, end] =
                 note.split(",");
             return {
                 user_played,
@@ -132,8 +133,9 @@ const parseNotes = (contents: string) => {
                 start: parseFloat(start),
                 end: parseFloat(end),
             } as NoteData;
-        }),
-    );
+        });
+
+    return notes;
 };
 
 /**
@@ -222,7 +224,7 @@ export function main(
     };
 
     const source$ = tick$
-        .pipe(scan((s: State) => ({ ...s, gameEnd: false }), initialState))
+        .pipe(scan((acc: State) => ({ gameEnd: false }), initialState))
         .subscribe((s: State) => {
             render(s);
 
@@ -234,18 +236,17 @@ export function main(
         });
 
     // TODO Parse the notes from the contents of the song CSV file
-    const note$ = parseNotes(csvContents);
+    const notes: ReadonlyArray<NoteData> = parseNotes(csvContents);
 
     // * Add notes moving down the screen (notes where user_played is True)
 
     // TODO Introduce some way of associating the notes in your state with their corresponding SVG element
     // This is so you can refer to the correct SVG elements when updating the view
 
-    // TODO Assign each note to a column
+    // TODO Assign each note to a column based on the pitch
     // render, destructure and take out each color
 
     // TODO Time each note to appear appropriately according to the song (refer to week 3 applied exercise 5)
-    //
 
     // TODO Animate the notes to move down continuously without stopping (refer to week 3 applied exercise 2)
 
