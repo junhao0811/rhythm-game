@@ -1,71 +1,55 @@
-# Assignment 1
+# 🎵 Rhythm Game (TypeScript + RxJS)
 
-## Usage
+A Guitar Hero–style browser rhythm game built with **functional reactive programming**. Notes fall down four colour-coded lanes in time with the song, while the backing track plays through real sampled instruments.
 
-Setup (requires node.js):
+---
+
+## ✨ Features
+
+- **Song-driven notes**: songs are loaded from a CSV of notes (instrument, pitch, velocity, start and end time), and each note is placed in one of four lanes based on its pitch
+- **Live music playback**: background parts play through **Tone.js** sampled instruments (violin, piano, trumpet, saxophone, flute and more) at exactly the right moment. The included song is *Rockin' Robin* (public domain)
+- **Smooth animation**: notes fall continuously and disappear when they leave the play area
+- **Keyboard lanes**: `H` `J` `K` `L` map to the four lanes, with live highlighting of the pressed key
+- **Game-over screen** when the song ends
+
+### 🛣️ Roadmap
+- Hit detection and scoring (with score multiplier and high score, as the UI already has slots for them)
+- More songs and a song picker
+
+---
+
+## 🧠 How it works
+
+The whole game is built as **pure, reactive streams** with RxJS:
+
+```
+keypress$ ─┐
+           ├─▶ merge ─▶ scan(reduceState) ─▶ render(state)
+tick$ ─────┘
+```
+
+- **Input and time are streams**: key presses and a fixed-rate clock (`interval`) are turned into *actions*
+- **State is immutable**: every action is a pure function `State → State`, folded together with `scan`
+- **Side effects stay at the edge**: only the final `subscribe` touches the SVG canvas and plays audio
+
+| File | Responsibility |
+|---|---|
+| `src/main.ts` | Streams, rendering and wiring everything together |
+| `src/state.ts` | Immutable game state and the `Tick` / note actions |
+| `src/util.ts` | CSV parsing and audio playback helpers |
+| `src/types.ts` | Shared types and constants |
+
+---
+
+## 🚀 Run it
 
 ```bash
-> npm install
+npm install
+npm run dev      # then open the local URL shown in the terminal
+npm test         # run the tests
 ```
 
-Start tests:
+**Instrument samples:** the `.mp3` samples aren't stored in this repo. Download them from [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments) and place them in `public/samples/`.
 
-```bash
-> npm test
-```
-
-Serve up the App (and ctrl-click the URL that appears in the console)
-
-```bash
-> npm run dev
-```
-
-To format your code, for the assignment specifications:
-
-```bash
-npx prettier . --write
-```
-
-The configuration for this is set in `.prettierrc.json`. Feel free to change this to your heart's desire, but try to ensure it still fits the assignment guidelines.
-
-If you are using VS Code, you can also install the [Prettier extension](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode). This skeleton code is set up to automatically format your code on save. You can disable this in `.vscode/settings.json` by changing `"editor.formatOnSave": true` to `"editor.formatOnSave": false`.
-
-## Implementing features
-
-There are a few files you may wish to modify. The rest should **not** be modified as they are used for configuring the build.
-
-`src/main.ts`
-
--   Code file used as the entry point
--   Most of your game logic should go here
--   Contains main function that is called on page load
-
-`src/style.css`
-
--   Stylesheet
--   You may edit this if you wish
-
-`index.html`
-
--   Main html file
--   Contains scaffold of game window and some sample shapes
--   Feel free to add to this, but avoid changing the existing code, especially the `id` fields
-
-`test/*.test.ts`
-
--   If you want to add tests, these go here
--   Uses [`vitest`](https://vitest.dev/api/)
-
-We expect the core logic of your game to be in `src/main.ts`, however, you may elect to spread your code over multiple files. In this case, please use ![TS Modules](https://www.typescriptlang.org/docs/handbook/modules.html).
-
-Avoid separating code into too many files as it makes it hard to mark. The maximum recommended code file structure would be something like
-
-```
-src/
-  main.ts        -- main code logic inc. core game loop
-  types.ts       -- common types and type aliases
-  util.ts        -- util functions
-  state.ts       -- state processing and transformation
-  view.ts        -- rendering
-  observable.ts  -- functions to create Observable streams
-```
+## 🛠️ Tech
+TypeScript · RxJS · Tone.js · Vite · Vitest
