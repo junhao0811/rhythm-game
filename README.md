@@ -49,7 +49,7 @@ npm run dev      # then open the local URL shown in the terminal
 npm test         # run the tests
 ```
 
-**Instrument samples:** the `.mp3` samples aren't stored in this repo. Download them from [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments) and place them in `public/samples/`.
+Instrument samples are included in `samples/` (from [tonejs-instruments](https://github.com/nbrosowsky/tonejs-instruments)).
 
 ## 🛠️ Tech
 TypeScript · RxJS · Tone.js · Vite · Vitest
